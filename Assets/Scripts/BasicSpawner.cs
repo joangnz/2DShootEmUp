@@ -34,6 +34,8 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
             runner.Despawn(networkObject);
             _spawnedCharacters.Remove(player);
             characterManager.SetCharacterAvailable(networkObject.GetComponent<Player>().GetPlayerState().GetCharacterId(), true);
+
+            // Update current players' states to the client
         }
     }
 

@@ -28,6 +28,15 @@ public class Attack2 : NetworkBehaviour
         _playerTransform =  _playerObject.GetComponent<Transform>();
 
         Life = TickTimer.CreateFromSeconds(Runner, 0.3f);
+
+        RpcInit(characterId);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RpcInit(int characterId)
+    {
+        _spriteRenderer.sprite = AttackManager.GetA1Sprite(characterId);
+        // _animator.runtimeAnimatorController = AttackManager.GetA1Animator(characterId).runtimeAnimatorController;
     }
 
     public override void FixedUpdateNetwork()
