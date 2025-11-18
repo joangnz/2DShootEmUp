@@ -6,19 +6,26 @@ public class Attack1 : NetworkBehaviour
     [Networked] private TickTimer Life { get; set; }
     [Networked] private int Damage { get; set; } = 100;
 
+    private AttackManager AttackManager;
+
     private Vector2 _direction;
 
+    private Animator _animator;
     private SpriteRenderer _spriteRenderer;
-    private CircleCollider2D _collider;
 
     public void Awake()
     {
-        _spriteRenderer = GetComponent<SpriteRenderer>();
-        _collider = GetComponent<CircleCollider2D>();
+        AttackManager = FindFirstObjectByType<AttackManager>();
+
+        _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        _animator = GetComponentInChildren<Animator>();
     }
 
-    public void Init(Vector2 direction)
+    public void Init(Vector2 direction, int characterId)
     {
+        _spriteRenderer.sprite = AttackManager.GetA1Sprite(characterId);
+        _animator.runtimeAnimatorController = AttackManager.GetA1Animator(characterId).runtimeAnimatorController;
+
         Life = TickTimer.CreateFromSeconds(Runner, 5.0f);
         _direction = direction.normalized;
     }

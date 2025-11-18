@@ -1,7 +1,8 @@
+using Fusion;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CharacterManager: MonoBehaviour
+public class CharacterManager: NetworkBehaviour
 {
     private List<Character> _characterList = new();
     [SerializeField] private Sprite sprite1, sprite2, sprite3, sprite4, sprite5;

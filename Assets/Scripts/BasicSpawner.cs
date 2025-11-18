@@ -3,11 +3,14 @@ using Fusion.Sockets;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 {
+    [SerializeField] private CharacterManager characterManager;
+    [SerializeField] private AttackManager attackManager;
     [SerializeField] private NetworkPrefabRef _playerPrefab, _mobPrefab;
     public static Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new();
     private bool _mouseButton0, _mouseButton1;
@@ -30,6 +33,7 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
         {
             runner.Despawn(networkObject);
             _spawnedCharacters.Remove(player);
+            characterManager.SetCharacterAvailable(networkObject.GetComponent<Player>().GetPlayerState().GetCharacterId(), true);
         }
     }
 
@@ -106,6 +110,7 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 
         while (true)
         {
+            if (!_runner.IsServer) break;
             float y = UnityEngine.Random.Range(-6f, 6f);
             float x = UnityEngine.Random.Range(-9f, -5f);
             Vector2 spawnPosition = new(x, y);
@@ -151,4 +156,18 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
             if (GUI.Button(new Rect(0, 80, 200, 40), "Join")) StartGame(GameMode.Client);
         }
     }
+
+    /*
+    // [Rpc(RpcSources.All, RpcTargets.All)]
+    public void ChangePlayerCharacter(Player player, int id, PlayerState playerState)
+    {
+        player.SetSprite(characterManager.GetSprite(id));
+        player.SetAnimator(characterManager.GetAnimator(id));
+
+        characterManager.SetCharacterAvailable(playerState.GetCharacterId(), true);
+        characterManager.SetCharacterAvailable(id, false);
+
+        playerState.SetCharacterId(id);
+    }
+    */
 }

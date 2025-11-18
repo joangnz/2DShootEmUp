@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class Player : NetworkBehaviour
 {
+    private NetworkObject _networkObject;
     [Networked] private TickTimer Delay { get; set; }
     [Networked] private ref PlayerState PlayerStateRef => ref MakeRef<PlayerState>();
 
@@ -11,8 +12,7 @@ public class Player : NetworkBehaviour
 
     private CharacterManager CharacterManager;
 
-    private Rigidbody2D _rb;
-    private NetworkTransform _nt;
+    private Rigidbody2D _rigidbody2D;
     private SpriteRenderer _spriteRenderer;
     private Animator _animator;
 
@@ -20,20 +20,24 @@ public class Player : NetworkBehaviour
 
     public PlayerState GetPlayerState() => PlayerStateRef;
     public void UpdatePlayerState(PlayerState state) => PlayerStateRef = state;
+    
+    public void SetSprite(Sprite sprite) => _spriteRenderer.sprite = sprite;
+
+    public void SetAnimator(Animator animator) => _animator.runtimeAnimatorController = animator.runtimeAnimatorController;
 
     private void Awake()
     {
         CharacterManager = FindFirstObjectByType<CharacterManager>();
 
-        _rb = GetComponent<Rigidbody2D>();
-        _nt = GetComponent<NetworkTransform>();
-
-        _animator = transform.GetComponentInChildren<Animator>();
-        _spriteRenderer = transform.GetComponentInChildren<SpriteRenderer>();
+        _rigidbody2D = GetComponent<Rigidbody2D>();
+        _animator = GetComponentInChildren<Animator>();
+        _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
     }
 
     public override void Spawned()
     {
+        _networkObject = GetComponent<NetworkObject>();
+
         // Create logic for availability
         int characterId = CharacterManager.GetFirstAvailableCharacterId();
         if (characterId < 1 || characterId > 5) return;
@@ -48,11 +52,8 @@ public class Player : NetworkBehaviour
         {
             data.direction.Normalize();
 
-            _rb.position += 3*Runner.DeltaTime*data.direction;
-            transform.position = _rb.position;
-
-            //_rb.transform.position += 3*Runner.DeltaTime*(Vector3)data.direction;
-            //_nt.transform.position = _rb.transform.position;
+            transform.position += 3*Runner.DeltaTime*(Vector3)data.direction;
+            _rigidbody2D.position = transform.position;
 
             if (data.direction.sqrMagnitude > 0)
                 _forward = data.direction;
@@ -66,7 +67,7 @@ public class Player : NetworkBehaviour
             {
                 for (int i = 1; i <= 5; i++)
                 {
-                    if (data.buttons.IsSet(i))
+                    if (data.buttons.IsSet(i) && Runner.IsServer)
                     {
                         ChangeCharacter(i);
                     }
@@ -85,7 +86,7 @@ public class Player : NetworkBehaviour
                     Object.InputAuthority, (runner, o) =>
                     {
                         // Initialize the Ball before synchronizing it
-                        o.GetComponent<Attack1>().Init(_forward);
+                        o.GetComponent<Attack1>().Init(_forward, PlayerStateRef.GetCharacterId());
                     });
                 }
 
@@ -101,7 +102,7 @@ public class Player : NetworkBehaviour
                     spawnRot,
                     Object.InputAuthority, (runner, o) =>
                     {
-                        o.GetComponent<Attack2>().Init(_forward);
+                        o.GetComponent<Attack2>().Init(_networkObject, PlayerStateRef.GetCharacterId());
                     });
                 }
             }
@@ -110,12 +111,28 @@ public class Player : NetworkBehaviour
 
     public void ChangeCharacter(int id)
     {
-        _spriteRenderer.sprite = CharacterManager.GetSprite(id);
-        _animator.runtimeAnimatorController = CharacterManager.GetAnimator(id).runtimeAnimatorController;
-        
+        if (!CharacterManager.GetCharacterAvailable(id)) return;
+        SetSprite(CharacterManager.GetSprite(id));
+        SetAnimator(CharacterManager.GetAnimator(id));
+
         CharacterManager.SetCharacterAvailable(PlayerStateRef.GetCharacterId(), true);
         CharacterManager.SetCharacterAvailable(id, false);
-        
+
+        PlayerStateRef.SetCharacterId(id);
+
+
+        RPC_ChangeCharacter(id);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_ChangeCharacter(int id)
+    {
+        SetSprite(CharacterManager.GetSprite(id));
+        SetAnimator(CharacterManager.GetAnimator(id));
+
+        CharacterManager.SetCharacterAvailable(PlayerStateRef.GetCharacterId(), true);
+        CharacterManager.SetCharacterAvailable(id, false);
+
         PlayerStateRef.SetCharacterId(id);
     }
 }
