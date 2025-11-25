@@ -22,8 +22,10 @@ public class Player : NetworkBehaviour
     public void UpdatePlayerState(PlayerState state) => PlayerStateRef = state;
     
     public void SetSprite(Sprite sprite) => _spriteRenderer.sprite = sprite;
+    public Sprite GetSprite() => _spriteRenderer.sprite;
 
     public void SetAnimator(Animator animator) => _animator.runtimeAnimatorController = animator.runtimeAnimatorController;
+    public Animator GetAnimator() => _animator;
 
     private void Awake()
     {
@@ -39,11 +41,13 @@ public class Player : NetworkBehaviour
         _networkObject = GetComponent<NetworkObject>();
 
         // Create logic for availability
-        int characterId = CharacterManager.GetFirstAvailableCharacterId();
-        if (characterId < 1 || characterId > 5) return;
+        //int characterId = CharacterManager.GetFirstAvailableCharacterId();
+        //if (characterId < 1 || characterId > 5) return;
 
-        PlayerStateRef = new PlayerState(characterId, 100);
-        CharacterManager.SetCharacterAvailable(characterId, false);
+        //CharacterManager.SetCharacterAvailable(characterId, false);
+        //PlayerStateRef = new PlayerState(characterId, 100);
+        //SetAnimator(CharacterManager.GetAnimator(characterId));
+        //SetSprite(CharacterManager.GetSprite(characterId));
     }
 
     public override void FixedUpdateNetwork()
@@ -112,15 +116,6 @@ public class Player : NetworkBehaviour
     public void ChangeCharacter(int id)
     {
         if (!CharacterManager.GetCharacterAvailable(id)) return;
-        SetSprite(CharacterManager.GetSprite(id));
-        SetAnimator(CharacterManager.GetAnimator(id));
-
-        CharacterManager.SetCharacterAvailable(PlayerStateRef.GetCharacterId(), true);
-        CharacterManager.SetCharacterAvailable(id, false);
-
-        PlayerStateRef.SetCharacterId(id);
-
-
         RPC_ChangeCharacter(id);
     }
 
@@ -134,5 +129,13 @@ public class Player : NetworkBehaviour
         CharacterManager.SetCharacterAvailable(id, false);
 
         PlayerStateRef.SetCharacterId(id);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_UpdatePlayerInfo(PlayerRef targetPlayer)
+    {
+        int id = PlayerStateRef.GetCharacterId();
+        SetSprite(CharacterManager.GetSprite(id));
+        SetAnimator(CharacterManager.GetAnimator(id));
     }
 }

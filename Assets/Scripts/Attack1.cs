@@ -23,9 +23,6 @@ public class Attack1 : NetworkBehaviour
 
     public void Init(Vector2 direction, int characterId)
     {
-        _spriteRenderer.sprite = AttackManager.GetA1Sprite(characterId);
-        _animator.runtimeAnimatorController = AttackManager.GetA1Animator(characterId).runtimeAnimatorController;
-
         Life = TickTimer.CreateFromSeconds(Runner, 5.0f);
         _direction = direction.normalized;
 

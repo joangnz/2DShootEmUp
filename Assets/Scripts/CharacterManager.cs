@@ -15,9 +15,9 @@ public class CharacterManager: NetworkBehaviour
         Animators = new Animator[] { a1, a2, a3, a4, a5 };
         Sprites = new Sprite[] { sprite1, sprite2, sprite3, sprite4, sprite5 };
 
-        for (int i = 0; i < 5; i++)
+        for (int i = 1; i <= 5; i++)
         {
-            _characterList.Add(new(i+1, Sprites[i], Animators[i]));
+            _characterList.Add(new(i, Sprites[i-1], Animators[i-1]));
         }
     }
 

@@ -22,8 +22,6 @@ public class Attack2 : NetworkBehaviour
 
     public void Init(NetworkObject networkObject, int characterId)
     {
-        _spriteRenderer.sprite = AttackManager.GetA2Sprite(characterId);
-
         _playerObject = networkObject;
         _playerTransform =  _playerObject.GetComponent<Transform>();
 
@@ -35,7 +33,7 @@ public class Attack2 : NetworkBehaviour
     [Rpc(RpcSources.All, RpcTargets.All)]
     public void RpcInit(int characterId)
     {
-        _spriteRenderer.sprite = AttackManager.GetA1Sprite(characterId);
+        _spriteRenderer.sprite = AttackManager.GetA2Sprite(characterId);
         // _animator.runtimeAnimatorController = AttackManager.GetA1Animator(characterId).runtimeAnimatorController;
     }
 
@@ -50,7 +48,7 @@ public class Attack2 : NetworkBehaviour
     private void OnTriggerEnter2D(Collider2D collision)
     {
         // Check if Mob and reduce HP if so
-        if (collision.gameObject.TryGetComponent<Mob>(out Mob mob))
+        if (collision.gameObject.TryGetComponent(out Mob mob))
         {
             Debug.Log("TestSlash");
             mob.SetHealth(mob.GetHealth() - Damage);

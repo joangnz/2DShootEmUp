@@ -3,7 +3,7 @@ using Fusion.Sockets;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -15,15 +15,43 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     public static Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new();
     private bool _mouseButton0, _mouseButton1;
 
-    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
+    public void OnPlayerJoined(NetworkRunner runner, PlayerRef playerRef)
     {
         if (runner.IsServer)
         {
             // Create a unique position for the player
             // Vector2 spawnPosition = new((player.RawEncoded % runner.Config.Simulation.PlayerCount) * 3, 1);
-            NetworkObject networkPlayerObject = runner.Spawn(_playerPrefab, new(0,0), Quaternion.identity, player);
+            NetworkObject networkPlayerObject = runner.Spawn(_playerPrefab, new(0, 0), Quaternion.identity, playerRef);
+
+            // Run a player method that, in that client, updates all the existing player's states to the server's
+            Player player = networkPlayerObject.GetComponent<Player>();
+
+            // Create logic for availability
+            int characterId = characterManager.GetFirstAvailableCharacterId();
+            if (characterId < 1 || characterId > 5) return;
+
+            characterManager.SetCharacterAvailable(characterId, false);
+            PlayerState PlayerStateRef = new(characterId, 100);
+            player.UpdatePlayerState(PlayerStateRef);
+            player.SetAnimator(characterManager.GetAnimator(characterId));
+            player.SetSprite(characterManager.GetSprite(characterId));
+            player.RPC_ChangeCharacter(characterId);
+
+            NotifyNewPlayerOfExistingPlayers(playerRef);
+
             // Keep track of the player avatars for easy access
-            _spawnedCharacters.Add(player, networkPlayerObject);
+            _spawnedCharacters.Add(playerRef, networkPlayerObject);
+        }
+    }
+
+    public void NotifyNewPlayerOfExistingPlayers(PlayerRef newPlayeRef)
+    {
+        foreach (PlayerRef playerRef in _spawnedCharacters.Keys.ToList())
+        {
+            var playerObject = _spawnedCharacters[playerRef];
+            Player player = playerObject.GetComponent<Player>();
+
+            player.RPC_UpdatePlayerInfo(newPlayeRef);
         }
     }
 
@@ -31,9 +59,9 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (_spawnedCharacters.TryGetValue(player, out NetworkObject networkObject))
         {
+            characterManager.SetCharacterAvailable(networkObject.GetComponent<Player>().GetPlayerState().GetCharacterId(), true);
             runner.Despawn(networkObject);
             _spawnedCharacters.Remove(player);
-            characterManager.SetCharacterAvailable(networkObject.GetComponent<Player>().GetPlayerState().GetCharacterId(), true);
 
             // Update current players' states to the client
         }

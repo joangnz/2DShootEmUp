@@ -52,8 +52,8 @@ public class Mob : NetworkBehaviour
 
         _spawnedCharacters = BasicSpawner._spawnedCharacters;
         _forward = GetClosestPlayerDirection();
-        _rb.position += 2*Runner.DeltaTime*_forward;
 
+        _rb.position += 2*Runner.DeltaTime*_forward;
         transform.position = _rb.position;
     }
 
