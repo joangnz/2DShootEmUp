@@ -55,6 +55,16 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
         }
     }
 
+    public void KillPlayer(Player player)
+    {
+        if (_spawnedCharacters.TryGetValue(player.Object.InputAuthority, out NetworkObject networkObject))
+        {
+            characterManager.SetCharacterAvailable(player.GetPlayerState().GetCharacterId(), true);
+            _spawnedCharacters.Remove(player.Object.InputAuthority);
+            _runner.Despawn(networkObject);
+        }
+    }
+
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
         if (_spawnedCharacters.TryGetValue(player, out NetworkObject networkObject))
@@ -144,7 +154,6 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
             float y = UnityEngine.Random.Range(-6f, 6f);
             float x = UnityEngine.Random.Range(-9f, -5f);
             Vector2 spawnPosition = new(x, y);
-            Debug.Log(spawnPosition);
             _ = _runner.Spawn(_mobPrefab, spawnPosition, Quaternion.identity);
 
             yield return new WaitForSeconds(5f);
@@ -186,18 +195,4 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
             if (GUI.Button(new Rect(0, 80, 200, 40), "Join")) StartGame(GameMode.Client);
         }
     }
-
-    /*
-    // [Rpc(RpcSources.All, RpcTargets.All)]
-    public void ChangePlayerCharacter(Player player, int id, PlayerState playerState)
-    {
-        player.SetSprite(characterManager.GetSprite(id));
-        player.SetAnimator(characterManager.GetAnimator(id));
-
-        characterManager.SetCharacterAvailable(playerState.GetCharacterId(), true);
-        characterManager.SetCharacterAvailable(id, false);
-
-        playerState.SetCharacterId(id);
-    }
-    */
 }

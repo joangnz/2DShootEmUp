@@ -1,5 +1,6 @@
 using UnityEngine;
 using Fusion;
+using System.Collections;
 
 public class Attack1 : NetworkBehaviour
 {
@@ -47,12 +48,20 @@ public class Attack1 : NetworkBehaviour
     private void OnTriggerEnter2D(Collider2D collision)
     {
         // Check if Mob and reduce HP if so
-        if (collision.gameObject.TryGetComponent<Mob>( out Mob mob))
+        if (collision.gameObject.TryGetComponent( out Mob mob))
         {
-            Debug.Log("TestBall");
+            MobDebounce(mob);
+            mob.SetAttackedDebounce(true);
             mob.SetHealth(mob.GetHealth() - Damage);
             if (mob.GetHealth() <= 0) Runner.Despawn(mob.Object);
             Runner.Despawn(Object);
         }
+    }
+
+    private IEnumerator MobDebounce(Mob mob)
+    {
+        mob.SetAttackedDebounce(true);
+        yield return new WaitForSeconds(0.3f);
+        mob.SetAttackedDebounce(false);
     }
 }

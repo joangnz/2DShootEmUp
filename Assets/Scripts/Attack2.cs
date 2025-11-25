@@ -50,7 +50,6 @@ public class Attack2 : NetworkBehaviour
         // Check if Mob and reduce HP if so
         if (collision.gameObject.TryGetComponent(out Mob mob))
         {
-            Debug.Log("TestSlash");
             mob.SetHealth(mob.GetHealth() - Damage);
             if (mob.GetHealth() <= 0) Runner.Despawn(mob.Object);
         }

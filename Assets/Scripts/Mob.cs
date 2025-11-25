@@ -8,12 +8,10 @@ public class Mob : NetworkBehaviour
     [Networked] private int Health { get; set; } = 100;
     [Networked] private int Damage { get; set; } = 10;
     [Networked] private bool Debounce { get; set; } = false;
-
-    private NetworkTransform _nt;
+    [Networked] private bool AttackedDebounce { get; set; } = false;
 
     private Dictionary<PlayerRef, NetworkObject> _spawnedCharacters;
 
-    private CapsuleCollider2D _collider;
     private Rigidbody2D _rb;
     private Vector2 _forward;
 
@@ -22,6 +20,9 @@ public class Mob : NetworkBehaviour
     public int GetDamage() => Damage;
     public bool GetDebounce() => Debounce;
     public void SetDebounce(bool debounce) => Debounce = debounce;
+    public bool GetAttackedDebounce() => AttackedDebounce;
+    public void SetAttackedDebounce(bool attackedDebounce) => AttackedDebounce = attackedDebounce;
+
     public IEnumerator ActivateDebounce()
     {
         SetDebounce(true);
@@ -39,10 +40,7 @@ public class Mob : NetworkBehaviour
     {
         _spawnedCharacters = BasicSpawner._spawnedCharacters;
         _rb = GetComponent<Rigidbody2D>();
-        _collider = GetComponent<CapsuleCollider2D>();
         _forward = GetClosestPlayerDirection().normalized;
-
-        _nt = GetComponent<NetworkTransform>();
     }
 
     public override void FixedUpdateNetwork()
@@ -65,13 +63,12 @@ public class Mob : NetworkBehaviour
         // Check if player and reduce HP if player
         if (collision.gameObject.TryGetComponent<Player>(out Player player))
         {
-            Debug.Log("TestMob");
             PlayerState playerState = player.GetPlayerState();
             if (GetDebounce()) return;
             StartCoroutine(ActivateDebounce());
 
-            Debug.Log("TestDebounce");
             playerState.SetHealth(playerState.GetHealth() - Damage);
+            if (playerState.GetHealth() < 0) Runner.GetComponent<BasicSpawner>().KillPlayer(player);
             player.UpdatePlayerState(playerState);
         }
     }
@@ -84,6 +81,7 @@ public class Mob : NetworkBehaviour
 
         foreach (NetworkObject playerObject in _spawnedCharacters.Values)
         {
+            if (playerObject == null) continue;
             Vector2 playerPos = new(playerObject.transform.position.x, playerObject.transform.position.y);
 
             Vector2 direction = playerPos - myPos;

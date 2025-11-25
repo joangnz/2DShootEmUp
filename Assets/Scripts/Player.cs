@@ -98,7 +98,6 @@ public class Player : NetworkBehaviour
                 {
                     Delay = TickTimer.CreateFromSeconds(Runner, 0.5f);
                     float angle = Mathf.Atan2(_forward.y, _forward.x) * Mathf.Rad2Deg - 180;
-                    Debug.Log(angle);
                     Quaternion spawnRot = Quaternion.Euler(0f, 0f, angle);
 
                     Runner.Spawn(_prefabAttack2,

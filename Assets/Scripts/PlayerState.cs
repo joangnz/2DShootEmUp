@@ -1,7 +1,4 @@
 using Fusion;
-using System.Collections;
-using UnityEngine;
-
 public struct PlayerState : INetworkStruct
 {
     public PlayerState(int _characterId, float _health)
