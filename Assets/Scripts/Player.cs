@@ -39,15 +39,6 @@ public class Player : NetworkBehaviour
     public override void Spawned()
     {
         _networkObject = GetComponent<NetworkObject>();
-
-        // Create logic for availability
-        //int characterId = CharacterManager.GetFirstAvailableCharacterId();
-        //if (characterId < 1 || characterId > 5) return;
-
-        //CharacterManager.SetCharacterAvailable(characterId, false);
-        //PlayerStateRef = new PlayerState(characterId, 100);
-        //SetAnimator(CharacterManager.GetAnimator(characterId));
-        //SetSprite(CharacterManager.GetSprite(characterId));
     }
 
     public override void FixedUpdateNetwork()
