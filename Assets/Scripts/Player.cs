@@ -1,4 +1,5 @@
 using Fusion;
+using TMPro;
 using UnityEngine;
 
 public class Player : NetworkBehaviour
@@ -12,33 +13,42 @@ public class Player : NetworkBehaviour
 
     private CharacterManager CharacterManager;
 
-    private Rigidbody2D _rigidbody2D;
-    private SpriteRenderer _spriteRenderer;
-    private Animator _animator;
+    private Rigidbody2D rb;
+    private SpriteRenderer sr;
+    private Animator an;
+    private TextMeshPro tmp;
 
     private Vector2 _forward = Vector2.right;
+
+    [Networked] private string Username { get; set; }
 
     public PlayerState GetPlayerState() => PlayerStateRef;
     public void UpdatePlayerState(PlayerState state) => PlayerStateRef = state;
     
-    public void SetSprite(Sprite sprite) => _spriteRenderer.sprite = sprite;
-    public Sprite GetSprite() => _spriteRenderer.sprite;
+    public void SetSprite(Sprite sprite) => sr.sprite = sprite;
+    public Sprite GetSprite() => sr.sprite;
 
-    public void SetAnimator(Animator animator) => _animator.runtimeAnimatorController = animator.runtimeAnimatorController;
-    public Animator GetAnimator() => _animator;
+    public void SetAnimator(Animator animator) => an.runtimeAnimatorController = animator.runtimeAnimatorController;
+    public Animator GetAnimator() => an;
 
     private void Awake()
     {
         CharacterManager = FindFirstObjectByType<CharacterManager>();
 
-        _rigidbody2D = GetComponent<Rigidbody2D>();
-        _animator = GetComponentInChildren<Animator>();
-        _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        rb = GetComponent<Rigidbody2D>();
+        an = GetComponentInChildren<Animator>();
+        sr = GetComponentInChildren<SpriteRenderer>();
+        tmp = GetComponentInChildren<TextMeshPro>();
     }
 
     public override void Spawned()
     {
         _networkObject = GetComponent<NetworkObject>();
+        if (Object.HasInputAuthority)
+        {
+            Username = PlayerPrefs.GetString("username", "Player " + Object.InputAuthority.PlayerId);
+            RPC_SetUsername(Username);
+        }
     }
 
     public override void FixedUpdateNetwork()
@@ -48,15 +58,15 @@ public class Player : NetworkBehaviour
             data.direction.Normalize();
 
             transform.position += 3*Runner.DeltaTime*(Vector3)data.direction;
-            _rigidbody2D.position = transform.position;
+            rb.position = transform.position;
 
             if (data.direction.sqrMagnitude > 0)
                 _forward = data.direction;
 
-            _animator.SetBool("north", data.north);
-            _animator.SetBool("south", data.south);
-            _animator.SetBool("east", data.east);
-            _animator.SetBool("west", data.west);
+            an.SetBool("north", data.north);
+            an.SetBool("south", data.south);
+            an.SetBool("east", data.east);
+            an.SetBool("west", data.west);
 
             if (HasStateAuthority && Delay.ExpiredOrNotRunning(Runner))
             {
@@ -122,10 +132,19 @@ public class Player : NetworkBehaviour
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
-    public void RPC_UpdatePlayerInfo(PlayerRef targetPlayer)
+    public void RPC_UpdatePlayerInfo(PlayerRef _)
     {
         int id = PlayerStateRef.GetCharacterId();
         SetSprite(CharacterManager.GetSprite(id));
         SetAnimator(CharacterManager.GetAnimator(id));
+        tmp.text = Username;
     }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_SetUsername(string username)
+    {
+        tmp.text = username;
+    }
+
+    public string GetUsername() => Username;
 }

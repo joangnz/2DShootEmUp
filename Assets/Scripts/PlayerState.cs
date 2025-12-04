@@ -7,8 +7,8 @@ public struct PlayerState : INetworkStruct
         Health = _health;
     }
 
-    public int CharacterId;
-    public float Health;
+    private int CharacterId;
+    private float Health;
 
     public void SetCharacterId(int id) => CharacterId = id;
 

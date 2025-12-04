@@ -72,8 +72,6 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
             characterManager.SetCharacterAvailable(networkObject.GetComponent<Player>().GetPlayerState().GetCharacterId(), true);
             runner.Despawn(networkObject);
             _spawnedCharacters.Remove(player);
-
-            // Update current players' states to the client
         }
     }
 
@@ -146,7 +144,7 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 
     private IEnumerator SpawnMobs()
     {
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(1f);
 
         while (true)
         {
